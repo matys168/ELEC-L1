@@ -1,0 +1,150 @@
+#include <Wire.h>
+#include "MAX30105.h"
+#include "heartRate.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+MAX30105 particleSensor;
+
+const byte RATE_SIZE = 4;
+byte rates[RATE_SIZE];
+byte rateSpot = 0;
+long lastBeat = 0;
+float beatsPerMinute;
+int beatAvg;
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+#define OLED_RESET -1
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+  Wire.begin();
+  Serial.begin(9600);
+
+  Serial.println("I2C scanner");
+  
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.display();
+  delay(3000);
+
+  Serial.println("Scanning...");
+
+  byte count = 0;
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.println("I2C Devices found:");
+  display.display();
+
+  for (byte i = 8; i < 120; i++) {
+    Wire.beginTransmission(i);
+    if (Wire.endTransmission() == 0) {
+      Serial.print("Found address: ");
+      Serial.print(i, DEC);
+      Serial.print(" (0x");
+      Serial.print(i, HEX);
+      Serial.println(")");
+      
+      display.setCursor(0, (count + 1) * 10);
+      display.print("0x");
+      if (i < 16)
+        display.print("0");
+      display.println(i, HEX);
+      display.display();
+
+      count++;
+    }
+    delay(100);
+  }
+
+  if (count == 0) {
+    Serial.println("No I2C devices found\n");
+    display.setCursor(0,10);
+    display.println("No I2C devices found");
+    display.display();
+  } else {
+    Serial.println("done\n");
+    display.setCursor(0,10);
+    display.println("Scan done");
+    display.display();
+  }
+
+  delay(5000);
+  
+  particleSensor.begin(Wire, I2C_SPEED_FAST);
+  particleSensor.setup();
+  particleSensor.setPulseAmplitudeRed(0x0A);
+
+
+  display.clearDisplay(); 
+  display.setTextSize(2); 
+  display.setTextColor(WHITE); 
+  display.setCursor(0,0); 
+  display.println("Bienvenue"); 
+  display.display();
+}
+
+void loop() {
+  long irValue = particleSensor.getIR(); 
+  
+  if (irValue > 7000) { 
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.println("Veuillez placer votre doigt");
+    display.display();
+    delay(5000);
+
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.println("VOTRE BPM : ");
+    display.println(beatAvg);
+    display.display();
+    
+    if (checkForBeat(irValue)) {
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setTextColor(WHITE);
+      display.setCursor(0,0);
+      display.println("VOTRE BPM : ");
+      display.println(beatAvg);
+      display.display(); 
+      
+      
+      tone(3, 1000);
+      delay(100);
+      noTone(3);
+      
+      
+      long delta = millis() - lastBeat;
+      lastBeat = millis();
+      beatsPerMinute = 60 / (delta / 1000.0);
+      
+      
+      if (beatsPerMinute < 255 && beatsPerMinute > 20) {
+        rates[rateSpot++] = (byte)beatsPerMinute;
+        rateSpot %= RATE_SIZE;
+        
+        beatAvg = 0;
+        for (byte x = 0 ; x < RATE_SIZE ; x++) {
+          beatAvg += rates[x];
+        }
+        beatAvg /= RATE_SIZE;
+      }
+    }
+  } else { 
+    beatAvg = 0; 
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.println("No finger detected");
+    display.display();
+}
