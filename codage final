@@ -1,0 +1,86 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "MAX30105.h"
+
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+
+#define OLED_RESET    -1
+#define SCREEN_ADDRESS 0x3C
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+void Capteur() {
+  int data = 75; 
+  // ici int data devrait etre égal a particleSensor.getIR() mais bon...
+  int var = data;
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("Ecran OLED non détecté"));
+    for(;;);
+  }
+
+  display.display(); 
+  delay(2000); 
+
+  display.clearDisplay();
+
+ 
+  display.setTextSize(2);     
+  display.setTextColor(SSD1306_WHITE); 
+  display.setCursor(5,5);    
+  display.println(F("Bienvenue")); 
+  display.display(); 
+  delay(3000);
+
+
+  display.clearDisplay();
+
+  
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,5);
+  display.println(F("Voici mon projet"));
+  display.setCursor(0,15);
+  display.println(F("d'electronique"));
+  display.display();
+  delay(5000);
+
+
+  display.clearDisplay();
+
+ 
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(5,5);
+  display.println(F("Svp mettez votre"));
+  display.setCursor(10,15);
+  display.println(F("votre doigt :)"));
+  display.display();
+  delay(7000);
+
+
+  display.clearDisplay();
+
+
+  for (int i = 0; i < 40; i++) {
+    display.setTextSize(1.8955);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(20,10);
+    display.println(F("BPM = int var"));
+    display.display();
+    delay(500);
+
+    display.clearDisplay();
+    display.display();
+    delay(500);
+  }
+}  
+void loop(){
+
+}
