@@ -1,0 +1,1 @@
+les 4premieres photos sont le resultat de mon capteur de frequence cardiaque , les 2 suivantes sont les composants les plus utiles donc l'ecran OLED et le capteur de frequence cardiaque 30102 ( avec carte arduino Uno et une planche a pain ) 
